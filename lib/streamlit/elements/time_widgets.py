@@ -16,17 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from textwrap import dedent
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Iterable, List, Sequence, Tuple, Union, cast
 
 from dateutil import relativedelta
 from typing_extensions import TypeAlias
@@ -64,8 +54,8 @@ DEFAULT_STEP_MINUTES = 15
 
 
 def _parse_date_value(
-    value: DateValue | str | None,
-) -> Tuple[Optional[List[date]], bool]:
+    value: DateValue | str | None | str,
+) -> Tuple[List[date] | None, bool]:
     parsed_dates: List[date]
     range_value: bool = False
     if value is None:
@@ -185,11 +175,9 @@ class _DateInputValues:
 
 @dataclass
 class TimeInputSerde:
-    value: Optional[time]
+    value: time | None
 
-    def deserialize(
-        self, ui_value: Optional[str], widget_id: Any = ""
-    ) -> Optional[time]:
+    def deserialize(self, ui_value: str | None, widget_id: Any = "") -> time | None:
         return datetime.strptime(ui_value, "%H:%M").time() if ui_value else self.value
 
     def serialize(self, v: Union[datetime, time, None]) -> str:
@@ -208,8 +196,8 @@ class DateInputSerde:
         self,
         ui_value: Any,
         widget_id: str = "",
-    ) -> Optional[Union[DateWidgetReturn, None]]:
-        return_value: Optional[Sequence[date]]
+    ) -> DateWidgetReturn | None:
+        return_value: Sequence[date] | None
         if ui_value is not None:
             return_value = tuple(
                 datetime.strptime(v, "%Y/%m/%d").date() for v in ui_value
@@ -237,11 +225,11 @@ class TimeWidgetsMixin:
         self,
         label: str,
         value: TimeValue | None | str = "...",
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
@@ -342,17 +330,17 @@ class TimeWidgetsMixin:
         self,
         label: str,
         value: time | datetime | None | str = "...",
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         step: Union[int, timedelta] = timedelta(minutes=DEFAULT_STEP_MINUTES),
-        ctx: Optional[ScriptRunContext] = None,
-    ) -> Union[time, None]:
+        ctx: ScriptRunContext | None = None,
+    ) -> time | None:
         key = to_key(key)
         check_callback_rules(self.dg, on_change)
         check_session_state_rules(default_value=value, key=key)
@@ -429,11 +417,11 @@ class TimeWidgetsMixin:
         value: DateValue | str | None = "...",
         min_value: SingleDateValue = None,
         max_value: SingleDateValue = None,
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
@@ -542,15 +530,15 @@ class TimeWidgetsMixin:
         value: DateValue | str | None = "...",
         min_value: SingleDateValue = None,
         max_value: SingleDateValue = None,
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-        ctx: Optional[ScriptRunContext] = None,
+        ctx: ScriptRunContext | None = None,
     ) -> DateWidgetReturn:
         key = to_key(key)
         check_callback_rules(self.dg, on_change)

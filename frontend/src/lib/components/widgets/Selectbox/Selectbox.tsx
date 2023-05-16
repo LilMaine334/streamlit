@@ -114,7 +114,7 @@ export class Selectbox extends React.PureComponent<Props, State> {
     )
   }
 
-  private onChange = (value?: number | undefined): void => {
+  private onChange = (value?: number): void => {
     if (value === undefined) {
       this.setState({ value: -1 }, () =>
         this.props.widgetMgr.clearIntValue(this.props.element, {

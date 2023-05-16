@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable, Generic, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, cast
 
 from streamlit.elements.form import current_form_id
 from streamlit.elements.utils import (
@@ -62,9 +62,9 @@ class RadioSerde(Generic[T]):
 
     def deserialize(
         self,
-        ui_value: Optional[int],
+        ui_value: int | None,
         widget_id: str = "",
-    ) -> Optional[T]:
+    ) -> T | None:
         idx = ui_value if ui_value is not None else self.index
         if idx == -1:
             return None
@@ -83,16 +83,16 @@ class RadioMixin:
         options: OptionSequence[T],
         index: int | None = 0,
         format_func: Callable[[Any], Any] = str,
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only args:
         disabled: bool = False,
         horizontal: bool = False,
         label_visibility: LabelVisibility = "visible",
-    ) -> Optional[T]:
+    ) -> T | None:
         r"""Display a radio button widget.
 
         Parameters
@@ -207,17 +207,17 @@ class RadioMixin:
         options: OptionSequence[T],
         index: int | None = 0,
         format_func: Callable[[Any], Any] = str,
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only args:
         disabled: bool = False,
         horizontal: bool = False,
         label_visibility: LabelVisibility = "visible",
-        ctx: Optional[ScriptRunContext],
-    ) -> Optional[T]:
+        ctx: ScriptRunContext | None,
+    ) -> T | None:
         key = to_key(key)
         check_callback_rules(self.dg, on_change)
         check_session_state_rules(default_value=None if index == 0 else index, key=key)

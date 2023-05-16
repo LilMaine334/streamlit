@@ -23,13 +23,16 @@ import { hasMatch, score } from "fzy.js"
 import { withTheme } from "@emotion/react"
 import { EmotionTheme } from "src/lib/theme"
 import _ from "lodash"
-import { LabelVisibilityOptions } from "src/lib/util/utils"
+import { isNullOrUndefined, LabelVisibilityOptions } from "src/lib/util/utils"
 import { Placement } from "src/lib/components/shared/Tooltip"
 import TooltipIcon from "src/lib/components/shared/TooltipIcon"
 import {
   WidgetLabel,
   StyledWidgetLabelHelp,
 } from "src/lib/components/widgets/BaseWidget"
+
+const NO_OPTIONS_MSG = "No options to select."
+const CHOOSE_OPTION_MSG = "Choose an option"
 
 export interface Props {
   disabled: boolean
@@ -144,19 +147,17 @@ export class Selectbox extends React.PureComponent<Props, State> {
     const { label, labelVisibility, help, clearable, theme } = this.props
     let { disabled, options } = this.props
 
-    const noOptionsMsg = "No options to select."
-    const chooseOptionMsg = "Choose an option"
     let value = [
       {
         label:
-          options.length > 0 && this.state.value
+          options.length > 0 && !isNullOrUndefined(this.state.value)
             ? options[this.state.value]
             : clearable
             ? null
-            : noOptionsMsg,
-        value: this.state.value
-          ? this.state.value.toString()
-          : this.state.value,
+            : NO_OPTIONS_MSG,
+        value: isNullOrUndefined(this.state.value)
+          ? this.state.value
+          : this.state.value.toString(),
       },
     ]
 
@@ -201,7 +202,8 @@ export class Selectbox extends React.PureComponent<Props, State> {
           onInputChange={this.onInputChange}
           onClose={this.onClose}
           clearable={clearable}
-          placeholder={clearable ? chooseOptionMsg : null}
+          placeholder={CHOOSE_OPTION_MSG}
+          escapeClearsValue={clearable}
           options={selectOptions}
           filterOptions={this.filterOptions}
           value={value}

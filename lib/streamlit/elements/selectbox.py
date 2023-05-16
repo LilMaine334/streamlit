@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable, Generic, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, cast
 
 from streamlit.elements.form import current_form_id
 from streamlit.elements.utils import (
@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 @dataclass
 class SelectboxSerde(Generic[T]):
     options: Sequence[T]
-    index: Optional[int]
+    index: int | None
 
     def serialize(self, v: object) -> int:
         if v is None:
@@ -62,9 +62,9 @@ class SelectboxSerde(Generic[T]):
 
     def deserialize(
         self,
-        ui_value: Optional[int],
+        ui_value: int | None,
         widget_id: str = "",
-    ) -> Optional[T]:
+    ) -> T | None:
         idx = ui_value if ui_value is not None else self.index
         return self.options[idx] if len(self.options) > 0 and idx is not None else None
 
@@ -77,15 +77,15 @@ class SelectboxMixin:
         options: OptionSequence[T],
         index: int | None = 0,
         format_func: Callable[[Any], Any] = str,
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-    ) -> Optional[T]:
+    ) -> T | None:
         r"""Display a select widget.
 
         Parameters
@@ -188,16 +188,16 @@ class SelectboxMixin:
         options: OptionSequence[T],
         index: int | None = 0,
         format_func: Callable[[Any], Any] = str,
-        key: Optional[Key] = None,
-        help: Optional[str] = None,
-        on_change: Optional[WidgetCallback] = None,
-        args: Optional[WidgetArgs] = None,
-        kwargs: Optional[WidgetKwargs] = None,
+        key: Key | None = None,
+        help: str | None = None,
+        on_change: WidgetCallback | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-        ctx: Optional[ScriptRunContext] = None,
-    ) -> Optional[T]:
+        ctx: ScriptRunContext | None = None,
+    ) -> T | None:
         key = to_key(key)
         check_callback_rules(self.dg, on_change)
         check_session_state_rules(default_value=None if index == 0 else index, key=key)
@@ -207,7 +207,7 @@ class SelectboxMixin:
         opt = ensure_indexable(options)
 
         clearable = index is None
-        if not isinstance(index, int) and not clearable:
+        if not isinstance(index, int) and index is not None:
             raise StreamlitAPIException(
                 "Selectbox Value has invalid type: %s" % type(index).__name__
             )

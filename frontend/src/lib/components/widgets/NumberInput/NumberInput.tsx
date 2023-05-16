@@ -23,7 +23,7 @@ import { NumberInput as NumberInputProto } from "src/lib/proto"
 import { WidgetStateManager, Source } from "src/lib/WidgetStateManager"
 import TooltipIcon from "src/lib/components/shared/TooltipIcon"
 import { Placement } from "src/lib/components/shared/Tooltip"
-
+import { isNullOrUndefined } from "src/lib/util/utils"
 import Icon from "src/lib/components/shared/Icon"
 import { Input as UIInput } from "baseui/input"
 import InputInstructions from "src/lib/components/shared/InputInstructions/InputInstructions"
@@ -130,7 +130,7 @@ export class NumberInput extends React.PureComponent<Props, State> {
   private updateFromProtobuf(): void {
     this.props.element.setValue = false
     const value = this.props.element.value
-    if (value === null || value === undefined) {
+    if (isNullOrUndefined(value)) {
       this.setState({ value, formattedValue: "" }, () => {
         this.commitWidgetValue({ fromUi: false })
       })
