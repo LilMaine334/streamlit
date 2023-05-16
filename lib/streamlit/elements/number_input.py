@@ -286,7 +286,7 @@ class NumberInputMixin:
         # Ensure that the value matches arguments' types.
         all_ints = int_value and int_args
 
-        if not isinstance(value, str):
+        if value is not Ellipsis:
             if (value and min_value and min_value > value) or (
                 value and max_value and max_value < value
             ):
@@ -330,7 +330,7 @@ class NumberInputMixin:
         number_input_proto = NumberInputProto()
         number_input_proto.data_type = data_type
         number_input_proto.label = label
-        if value is not None and not isinstance(value, str):
+        if value is not None and value is not Ellipsis:
             number_input_proto.default = value
         number_input_proto.form_id = current_form_id(self.dg)
         if help is not None:
