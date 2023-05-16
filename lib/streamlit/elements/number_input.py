@@ -15,7 +15,7 @@
 import numbers
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Optional, Union, cast
+from typing import TYPE_CHECKING, Optional, Union, cast
 
 import streamlit
 from streamlit.elements.form import current_form_id
@@ -39,6 +39,9 @@ from streamlit.runtime.state import (
 from streamlit.type_util import Key, LabelVisibility, maybe_raise_label_warnings, to_key
 
 Number = Union[int, float]
+
+if TYPE_CHECKING:
+    import builtins
 
 
 @dataclass
@@ -72,7 +75,7 @@ class NumberInputMixin:
         label: str,
         min_value: Optional[Number] = None,
         max_value: Optional[Number] = None,
-        value: Union[NoValue, Number, str] = "...",
+        value: Union[NoValue, Number, "builtins.ellipsis"] = Ellipsis,
         step: Optional[Number] = None,
         format: Optional[str] = None,
         key: Optional[Key] = None,
@@ -195,7 +198,7 @@ class NumberInputMixin:
         label: str,
         min_value: Optional[Number] = None,
         max_value: Optional[Number] = None,
-        value: Union[NoValue, Number, str] = "...",
+        value: Union[NoValue, Number, "builtins.ellipsis"] = Ellipsis,
         step: Optional[Number] = None,
         format: Optional[str] = None,
         key: Optional[Key] = None,
@@ -211,7 +214,7 @@ class NumberInputMixin:
         key = to_key(key)
         check_callback_rules(self.dg, on_change)
         clearable = value is None
-        is_default_value = isinstance(value, NoValue) or value == "..."
+        is_default_value = isinstance(value, NoValue) or value is Ellipsis
         check_session_state_rules(
             default_value=None if is_default_value else value, key=key
         )
@@ -237,7 +240,7 @@ class NumberInputMixin:
                 f"\n`step` has {type(step).__name__} type."
             )
 
-        if isinstance(value, NoValue) or value == "...":
+        if isinstance(value, NoValue) or value is Ellipsis:
             if min_value is not None:
                 value = min_value
             elif int_args and float_args:

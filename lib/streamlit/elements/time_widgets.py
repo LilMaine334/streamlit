@@ -41,6 +41,8 @@ from streamlit.runtime.state import (
 from streamlit.type_util import Key, LabelVisibility, maybe_raise_label_warnings, to_key
 
 if TYPE_CHECKING:
+    import builtins
+
     from streamlit.delta_generator import DeltaGenerator
 
 TimeValue: TypeAlias = Union[time, datetime, None]
@@ -54,13 +56,13 @@ DEFAULT_STEP_MINUTES = 15
 
 
 def _parse_date_value(
-    value: DateValue | str | None | str,
+    value: DateValue | str | None | "builtins.ellipsis",
 ) -> Tuple[List[date] | None, bool]:
     parsed_dates: List[date]
     range_value: bool = False
     if value is None:
         return None, range_value
-    elif value == "...":
+    elif value is Ellipsis:
         # Set value default.
         parsed_dates = [datetime.now().date()]
     elif isinstance(value, datetime):
@@ -224,7 +226,7 @@ class TimeWidgetsMixin:
     def time_input(
         self,
         label: str,
-        value: TimeValue | None | str = "...",
+        value: TimeValue | None | str | "builtins.ellipsis" = Ellipsis,
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
@@ -329,7 +331,7 @@ class TimeWidgetsMixin:
     def _time_input(
         self,
         label: str,
-        value: time | datetime | None | str = "...",
+        value: time | datetime | None | str | "builtins.ellipsis" = Ellipsis,
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
@@ -348,7 +350,7 @@ class TimeWidgetsMixin:
         maybe_raise_label_warnings(label, label_visibility)
 
         parsed_time: Union[time, None]
-        if value == "...":
+        if value is Ellipsis:
             value = datetime.now().time().replace(second=0, microsecond=0)
         clearable = value is None
         if clearable:
@@ -414,7 +416,7 @@ class TimeWidgetsMixin:
     def date_input(
         self,
         label: str,
-        value: DateValue | str | None = "...",
+        value: DateValue | str | None | "builtins.ellipsis" = Ellipsis,
         min_value: SingleDateValue = None,
         max_value: SingleDateValue = None,
         key: Key | None = None,
@@ -527,7 +529,7 @@ class TimeWidgetsMixin:
     def _date_input(
         self,
         label: str,
-        value: DateValue | str | None = "...",
+        value: DateValue | str | None | "builtins.ellipsis" = Ellipsis,
         min_value: SingleDateValue = None,
         max_value: SingleDateValue = None,
         key: Key | None = None,

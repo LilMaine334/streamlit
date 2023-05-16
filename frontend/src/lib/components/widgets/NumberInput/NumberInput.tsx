@@ -23,7 +23,6 @@ import { NumberInput as NumberInputProto } from "src/lib/proto"
 import { WidgetStateManager, Source } from "src/lib/WidgetStateManager"
 import TooltipIcon from "src/lib/components/shared/TooltipIcon"
 import { Placement } from "src/lib/components/shared/Tooltip"
-import { isNullOrUndefined } from "src/lib/util/utils"
 import Icon from "src/lib/components/shared/Icon"
 import { Input as UIInput } from "baseui/input"
 import InputInstructions from "src/lib/components/shared/InputInstructions/InputInstructions"
@@ -32,7 +31,10 @@ import {
   StyledWidgetLabelHelp,
 } from "src/lib/components/widgets/BaseWidget"
 
-import { labelVisibilityProtoValueToEnum } from "src/lib/util/utils"
+import {
+  labelVisibilityProtoValueToEnum,
+  isNullOrUndefined,
+} from "src/lib/util/utils"
 import { withTheme } from "@emotion/react"
 import { EmotionTheme } from "src/lib/theme"
 
