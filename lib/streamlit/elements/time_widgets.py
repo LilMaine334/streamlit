@@ -11,11 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 from dateutil import relativedelta
 from typing_extensions import TypeAlias
@@ -44,16 +55,22 @@ if TYPE_CHECKING:
 
 TimeValue: TypeAlias = Union[time, datetime, None]
 SingleDateValue: TypeAlias = Union[date, datetime, None]
-DateValue: TypeAlias = Union[SingleDateValue, Sequence[SingleDateValue]]
-DateWidgetReturn: TypeAlias = Union[date, Tuple[()], Tuple[date], Tuple[date, date]]
+DateValue: TypeAlias = Union[SingleDateValue, Sequence[SingleDateValue], str, None]
+DateWidgetReturn: TypeAlias = Union[
+    date, Tuple[()], Tuple[date], Tuple[date, date], None
+]
 
 DEFAULT_STEP_MINUTES = 15
 
 
-def _parse_date_value(value: DateValue) -> Tuple[List[date], bool]:
+def _parse_date_value(
+    value: DateValue | str | None,
+) -> Tuple[Optional[List[date]], bool]:
     parsed_dates: List[date]
     range_value: bool = False
     if value is None:
+        return None, range_value
+    elif value == "...":
         # Set value default.
         parsed_dates = [datetime.now().date()]
     elif isinstance(value, datetime):
@@ -79,7 +96,7 @@ def _parse_date_value(value: DateValue) -> Tuple[List[date], bool]:
 
 def _parse_min_date(
     min_value: SingleDateValue,
-    parsed_dates: Sequence[date],
+    parsed_dates: Sequence[date] | None,
 ) -> date:
     parsed_min_date: date
     if isinstance(min_value, datetime):
@@ -100,7 +117,7 @@ def _parse_min_date(
 
 def _parse_max_date(
     max_value: SingleDateValue,
-    parsed_dates: Sequence[date],
+    parsed_dates: Sequence[date] | None,
 ) -> date:
     parsed_max_date: date
     if isinstance(max_value, datetime):
@@ -121,10 +138,10 @@ def _parse_max_date(
 
 @dataclass(frozen=True)
 class _DateInputValues:
-    value: Sequence[date]
+    value: Sequence[date] | None
     is_range: bool
-    max: date
-    min: date
+    max: date | None
+    min: date | None
 
     @classmethod
     def from_raw_values(
@@ -148,13 +165,13 @@ class _DateInputValues:
         )
 
     def __post_init__(self) -> None:
-        if self.min > self.max:
+        if self.min is not None and self.max is not None and self.min > self.max:
             raise StreamlitAPIException(
                 f"The `min_value`, set to {self.min}, shouldn't be larger "
                 f"than the `max_value`, set to {self.max}."
             )
 
-        if self.value:
+        if self.value and self.min and self.max:
             start_value = self.value[0]
             end_value = self.value[-1]
 
@@ -168,16 +185,16 @@ class _DateInputValues:
 
 @dataclass
 class TimeInputSerde:
-    value: time
+    value: Optional[time]
 
-    def deserialize(self, ui_value: Optional[str], widget_id: Any = "") -> time:
-        return (
-            datetime.strptime(ui_value, "%H:%M").time()
-            if ui_value is not None
-            else self.value
-        )
+    def deserialize(
+        self, ui_value: Optional[str], widget_id: Any = ""
+    ) -> Optional[time]:
+        return datetime.strptime(ui_value, "%H:%M").time() if ui_value else self.value
 
-    def serialize(self, v: Union[datetime, time]) -> str:
+    def serialize(self, v: Union[datetime, time, None]) -> str:
+        if not v:
+            return ""
         if isinstance(v, datetime):
             v = v.time()
         return time.strftime(v, "%H:%M")
@@ -191,8 +208,8 @@ class DateInputSerde:
         self,
         ui_value: Any,
         widget_id: str = "",
-    ) -> DateWidgetReturn:
-        return_value: Sequence[date]
+    ) -> Optional[Union[DateWidgetReturn, None]]:
+        return_value: Optional[Sequence[date]]
         if ui_value is not None:
             return_value = tuple(
                 datetime.strptime(v, "%Y/%m/%d").date() for v in ui_value
@@ -200,11 +217,16 @@ class DateInputSerde:
         else:
             return_value = self.value.value
 
+        if return_value is None or len(return_value) == 0:
+            return None
+
         if not self.value.is_range:
             return return_value[0]
         return cast(DateWidgetReturn, tuple(return_value))
 
     def serialize(self, v: DateWidgetReturn) -> List[str]:
+        if v is None:
+            return []
         to_serialize = list(v) if isinstance(v, (list, tuple)) else [v]
         return [date.strftime(v, "%Y/%m/%d") for v in to_serialize]
 
@@ -214,7 +236,7 @@ class TimeWidgetsMixin:
     def time_input(
         self,
         label: str,
-        value: TimeValue = None,
+        value: TimeValue | None | str = "...",
         key: Optional[Key] = None,
         help: Optional[str] = None,
         on_change: Optional[WidgetCallback] = None,
@@ -224,7 +246,7 @@ class TimeWidgetsMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         step: Union[int, timedelta] = timedelta(minutes=DEFAULT_STEP_MINUTES),
-    ) -> time:
+    ) -> Union[time, None]:
         r"""Display a time input widget.
 
         Parameters
@@ -319,7 +341,7 @@ class TimeWidgetsMixin:
     def _time_input(
         self,
         label: str,
-        value: Union[time, datetime, None] = None,
+        value: time | datetime | None | str = "...",
         key: Optional[Key] = None,
         help: Optional[str] = None,
         on_change: Optional[WidgetCallback] = None,
@@ -330,17 +352,19 @@ class TimeWidgetsMixin:
         label_visibility: LabelVisibility = "visible",
         step: Union[int, timedelta] = timedelta(minutes=DEFAULT_STEP_MINUTES),
         ctx: Optional[ScriptRunContext] = None,
-    ) -> time:
+    ) -> Union[time, None]:
         key = to_key(key)
         check_callback_rules(self.dg, on_change)
         check_session_state_rules(default_value=value, key=key)
 
         maybe_raise_label_warnings(label, label_visibility)
 
-        parsed_time: time
-        if value is None:
-            # Set value default.
-            parsed_time = datetime.now().time().replace(second=0, microsecond=0)
+        parsed_time: Union[time, None]
+        if value == "...":
+            value = datetime.now().time().replace(second=0, microsecond=0)
+        clearable = value is None
+        if clearable:
+            parsed_time = None
         elif isinstance(value, datetime):
             parsed_time = value.time().replace(second=0, microsecond=0)
         elif isinstance(value, time):
@@ -353,7 +377,9 @@ class TimeWidgetsMixin:
 
         time_input_proto = TimeInputProto()
         time_input_proto.label = label
-        time_input_proto.default = time.strftime(parsed_time, "%H:%M")
+        time_input_proto.default = (
+            "" if parsed_time is None else time.strftime(parsed_time, "%H:%M")
+        )
         time_input_proto.form_id = current_form_id(self.dg)
         if not isinstance(step, (int, timedelta)):
             raise StreamlitAPIException(
@@ -385,6 +411,7 @@ class TimeWidgetsMixin:
         # This needs to be done after register_widget because we don't want
         # the following proto fields to affect a widget's ID.
         time_input_proto.disabled = disabled
+        time_input_proto.clearable = clearable
         time_input_proto.label_visibility.value = get_label_visibility_proto_value(
             label_visibility
         )
@@ -399,7 +426,7 @@ class TimeWidgetsMixin:
     def date_input(
         self,
         label: str,
-        value: DateValue = None,
+        value: DateValue | str | None = "...",
         min_value: SingleDateValue = None,
         max_value: SingleDateValue = None,
         key: Optional[Key] = None,
@@ -441,7 +468,7 @@ class TimeWidgetsMixin:
             For accessibility reasons, you should never set an empty label (label="")
             but hide it with label_visibility if needed. In the future, we may disallow
             empty labels by raising an exception.
-        value : datetime.date or datetime.datetime or list/tuple of datetime.date or datetime.datetime or None
+        value : datetime.date or datetime.datetime or list/tuple of datetime.date or datetime.datetime or str or None
             The value of this widget when it first renders. If a list/tuple with
             0 to 2 date/datetime values is provided, the datepicker will allow
             users to provide a range. Defaults to today as a single-date picker.
@@ -512,7 +539,7 @@ class TimeWidgetsMixin:
     def _date_input(
         self,
         label: str,
-        value: DateValue = None,
+        value: DateValue | str | None = "...",
         min_value: SingleDateValue = None,
         max_value: SingleDateValue = None,
         key: Optional[Key] = None,
@@ -544,12 +571,21 @@ class TimeWidgetsMixin:
             date_input_proto.help = dedent(help)
 
         date_input_proto.label = label
-        date_input_proto.default[:] = [
-            date.strftime(v, "%Y/%m/%d") for v in parsed_values.value
-        ]
 
-        date_input_proto.min = date.strftime(parsed_values.min, "%Y/%m/%d")
-        date_input_proto.max = date.strftime(parsed_values.max, "%Y/%m/%d")
+        clearable = parsed_values.value is None
+        if clearable:
+            date_input_proto.default[:] = []
+        elif isinstance(parsed_values.value, Iterable) or isinstance(
+            parsed_values.value, Sequence
+        ):
+            date_input_proto.default[:] = [
+                date.strftime(v, "%Y/%m/%d") for v in parsed_values.value
+            ]
+
+        if parsed_values.min:
+            date_input_proto.min = date.strftime(parsed_values.min, "%Y/%m/%d")
+        if parsed_values.max:
+            date_input_proto.max = date.strftime(parsed_values.max, "%Y/%m/%d")
 
         date_input_proto.form_id = current_form_id(self.dg)
 
@@ -570,6 +606,7 @@ class TimeWidgetsMixin:
         # This needs to be done after register_widget because we don't want
         # the following proto fields to affect a widget's ID.
         date_input_proto.disabled = disabled
+        date_input_proto.clearable = clearable
         date_input_proto.label_visibility.value = get_label_visibility_proto_value(
             label_visibility
         )
